@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:util="http://www.springframework.org/schema/util" xmlns:task="http://www.springframework.org/schema/cache"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-4.0.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop-4.0.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd">
+
+    <!--<context:property-placeholder location="classpath:properties/a.properties"></context:property-placeholder>-->
+
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:properties/a.properties</value>
+                <value>classpath:properties/b.properties</value>
+            </list>
+        </property>
+        <property name="fileEncoding" value="utf-8"></property>
+    </bean>
+
+    <!--<bean id="poolTaskScheduler" class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler"-->
+          <!--p:poolSize="5"></bean>-->
+    <bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
+        <property name="customEditors">
+
+            <map>
+                <entry key="domain.Car" value="editor.CarCustomEditor"></entry>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="myBoss" class="domain.Boss">
+        <constructor-arg value="${bossName}">
+        </constructor-arg>
+        <property name="niceCar" value="${bossCar}"></property>
+    </bean>
+
+    <!--<context:component-scan base-package="task"/>-->
+    <context:component-scan base-package="app"/>
+    <context:component-scan base-package="dao"/>
+    <context:component-scan base-package="service"/>
+    <context:component-scan base-package="web"/>
+
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+          destroy-method="close"
+          p:driverClassName="com.mysql.jdbc.Driver"
+          p:url="jdbc:mysql://localhost:3306/sampledb"
+          p:username="root"
+          p:password="root">
+    </bean>
+
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate" p:dataSource-ref="dataSource"></bean>
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+          p:dataSource-ref="dataSource"></bean>
+
+    <!-- 通过AOP配置提供事务增强，让service包下所有Bean的所有方法拥有事务 -->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="*"/>
+        </tx:attributes>
+    </tx:advice>
+    <aop:config proxy-target-class="true">
+        <aop:pointcut id="serviceMethod"
+                      expression="(execution(* service..*(..))) and (@annotation(org.springframework.transaction.annotation.Transactional))"/>
+        <aop:advisor pointcut-ref="serviceMethod" advice-ref="txAdvice"/>
+    </aop:config>
+</beans>
