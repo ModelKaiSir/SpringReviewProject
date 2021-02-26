@@ -17,6 +17,7 @@
         <spring.version>4.2.6.RELEASE</spring.version>
         <mysql.version>5.7.12</mysql.version>
         <servlet.version>2.5</servlet.version>
+        <report.version>RELEASE</report.version>
     </properties>
     <!--依赖包-->
     <dependencies>
@@ -55,6 +56,12 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
             <version>${spring.version}</version>
+        </dependency>
+        <!--uReport2报表工具-->
+        <dependency>
+            <groupId>com.bstek.ureport</groupId>
+            <artifactId>ureport2-console</artifactId>
+            <version>${report.version}</version>
         </dependency>
         <!--mysql数据库驱动-->
         <dependency>
