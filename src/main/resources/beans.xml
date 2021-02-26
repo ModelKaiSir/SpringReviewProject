@@ -13,8 +13,24 @@
        http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
 
     <bean id="user" class="domain.User" p:userId="1" p:userName="test" p:password="test"></bean>
-    <bean id="car" class="domain.Car" p:name="JiLi" p:maxSpeed="210" init-method="init" destroy-method="myDestroy"></bean>
+    <bean id="car" class="domain.Car" p:name="JiLi" p:maxSpeed="210" init-method="init"
+          destroy-method="myDestroy"></bean>
+
+    <bean id="target" class="advice.NaiveWaiter"></bean>
+    <bean id="forumTarget" class="advice.ForumService"></bean>
+    <bean id="advice" class="advice.WaiterAdvice"></bean>
+    <bean id="afterAdvice" class="advice.WaiterAfterAdvice"></bean>
+    <bean id="interceptor" class="advice.WatierInterceptor"></bean>
+    <bean id="wrong" class="advice.WaiterWrong"></bean>
+    <bean id="transManager" class="advice.TransManager"></bean>
+
 
     <bean class="processor.CustomBeanPostProcessor"></bean>
     <bean class="processor.CustomInstantiationAwareBeanPostProcessor"></bean>
+
+    <bean id="waiter" class="org.springframework.aop.framework.ProxyFactoryBean" p:interfaces="advice.Waiter"
+          p:interceptorNames="advice,afterAdvice,interceptor,wrong" p:target-ref="target"></bean>
+
+    <bean id="forum" class="org.springframework.aop.framework.ProxyFactoryBean"
+          p:interceptorNames="transManager" p:target-ref="forumTarget" p:proxyTargetClass="true"></bean>
 </beans>
