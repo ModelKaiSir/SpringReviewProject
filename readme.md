@@ -207,4 +207,97 @@ Object proxyObject = proxy.getProxy();
 - @After final增强，类似于try{}finally{}
 - @@DeclareParents 引介增强  
 
-切点织入顺序，在同一类中按定义顺序，不同类中按是否实现Ordered接口，没有实现则是不确定的。
+切点织入顺序，在同一类中按定义顺序，不同类中按是否实现Ordered接口，没有实现则是不确定的。  
+
+AspectJ底层是通过AspectJProxyFactory来创建代理对象的：  
+```$xslt
+AspectJProxyFactory apf = new AspectJProxyFactory();
+// 设置目标对象
+apf.setTarget();
+// 添加切面
+apf.addAspect([AspectJconfig].class);
+// 获取代理对象
+T obj = apf.getProxy();
+```  
+
+在Spring中可以通过配置的方式自动完成：  
+```$xslt
+<!-- 自动装配切面 -->
+<bean class="AnnotationAwareAspectJAutoProxyCreator">
+<!-- 或者使用aop提供的标签 与上面的方式效果相同 proxy-target-class控制是否强制使用cglib动态代理-->
+<aop:aspectj-autofactory />
+```  
+
+**事务管理**  
+
+事务隔离级别  
+
+- READ UNCOMMITED 
+- READ COMMITED
+- REPEATABLE READ
+- SERIALIZABLE   
+
+![事务隔离级别](resource/事务隔离级别.png)
+
+事务传播机制  
+
+- PROPAGATION_REQUIRED 没有事务则新建事务，否则加入到这个事务中
+- PROPAGATION_SUPPORTS 支持当前事务，没有则以无事务方式运行
+- PROPAGATION_MANDATORY 使用当前事务。没有事务则抛出异常
+- PROPAGATION_REQUIRES_NEW 新建事务。如果存在事务，就把当前事务挂起
+- PROPAGATION_NOT_SUPPORTED 以非事务方式运行。如果存在事务，就把当前事务挂起
+- PROPAGATION_NEVER 以非事务方式运行。如果存在事务，则抛出异常
+- PROPAGATION_NESTED 如果存在事务，则在嵌套事务内执行；没有事务则类似PROPAGATION_REQUIRED    
+
+Spring中提供完善的事务管理机制。  
+早期为Bean添加事务控制可以使用TransactionProxyFactoryBean来生成：
+```$xslt
+<bean id="target" class="TargetBean">
+<!-- 各类orm框架提供的事务管理器-->
+<bean id="txManager" class="..">
+<!-- 生成事务代理bean 属性optimize启用cglib代理-->
+<bean id="proxyBean" class="TransactionProxyFactoryBean" p:transactionManager-ref="txManager" p:target-ref="target">
+<!-- 其他配置-->
+    <property name="transactionAttributes">
+        <props>
+        <!-- 哪些方法可以被增强-->
+            <!-- 只读 -->
+            <prop key="get*">PROPAGATION_REQUIRED,readOnly</prop>
+            <!-- 可写 -->
+            <prop key="*">PROPAGATION_REQUIRED</prop>
+        <props>
+    </property>
+</bean>
+```  
+
+新版本使用tx、aop标签：  
+```$xslt
+<!-- 通过AOP配置提供事务增强，让service包下所有Bean的所有方法拥有事务 -->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="*"/>
+        </tx:attributes>
+    </tx:advice>
+    <aop:config proxy-target-class="true">
+        <aop:pointcut id="serviceMethod"
+                      expression="(execution(* service..*(..))) and (@annotation(org.springframework.transaction.annotation.Transactional))"/>
+        <aop:advisor pointcut-ref="serviceMethod" advice-ref="txAdvice"/>
+    </aop:config>
+```  
+
+使用注解：  
+```$xslt
+<!-- TransactionManager的id名为transsactionManager时，可以省略transaction-manager="transsactionManager" -->
+<tx:annotation-driven transaction-manager="transsactionManager"/>
+```  
+
+**@Transactional注解：**
+
+- propagation 事务传播行为 see Propagation.class
+- isolation 事务隔离级别 see Isolation.class
+- readOnly 事务读写性
+- timeout 超时时间 单位秒
+- rollbackFor 遇到时回滚的异常类型class数组
+- rollbackForClassName 遇到时回滚的异常类型名称数组
+- noRollbackFor 遇到时不回滚的异常类型class数组
+- noRollbackForClassName 遇到时不回滚的异常类型名称数组
