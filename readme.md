@@ -110,7 +110,101 @@ ApplicationContext本身也实现了MessageResource接口，只需要注册一�
 事件由容器统一管理，要产生事件，需要通过context.pushEvent(event)方法。
 #### AOP
 
+> jdk 动态代理是由jdk提供的, 它要求目标类必须实现接口才能为类创建代理，创建出来的代理是该实现接口的实现类。  
+
 aop由切点和增强来描述在哪里进行aop和具体逻辑，一个完整的切面是包含了切点和增强信息的。  
 
-切点 Pointcut  
-增强 Advice
+**增强 Advice**  
+
+增强负责具体的代码逻辑，包括前置增强、后置增强、环绕增强、异常增强和引介增强。  
+顾名思义，可以知道不同增强实现类的作用。增强的具体实现类：  
+- 前置增强 MethodBeforeAdvice Spring目前只支持方法级别的前置增强 
+- 后置增强 AfterReturningAdvice
+- 环绕增强 MethodInterceptor(org.aopalliance.intercept)综合实现了前置和后置增强的功能  
+- 异常抛出增强 ThrowsAdvice
+    > ThrowsAdvice 没有定义方法，通过约定的方式由具体实现类来提供afterThrowing方法。  
+
+    > AfterThrowing的方法签名规定为  
+
+    ```AfterThrowing (? super Throwable e) or (Method m, Object[] args, Object target, ? super Throwable e)```
+  
+    > 其他的签名则不合法，会报错。可以根据规则定义多个afterThrowing方法，实现根据不同的异常类型做出不同的处理。  
+- 引介增强 IntroductionInterceptor  
+> 引介增强可以为目标类创建新的方法和属性，实现一个新的接口。这种增强jdk代理无法实现，必须由cglib代理来实现。spring提供了DelegatingIntroductionInterceptor实现类，扩展该类来实现引介增强。  
+
+增强本身就可以描述切点，即代理目标类所有方法。  
+
+**切点 Pointcut**  
+> Pointcut通过ClassFilter和MethodMatcher来描述和定位切点。包括静态方法匹配和动态方法匹配。业务开发中一般使用注解以及AspectJ表达式来匹配。  
+
+- 静态方法切点 StaticMethodMatcherPointcut，子类NameMatchMethodPointcut和AbstractRegexpMethodPointcut
+- 动态方法切点 DynamicMethodMatcherPointcut
+- 注解切点 AnnotationMatchingPointcut
+- AspectJ表达式切点 ExpressionPointcut
+- 流程切点 ControlFlowPointcut 根据程序执行堆栈信息查看目标方法是否由某一个方法直接或间接发起调用来执行增强逻辑。
+- 复合切点 ComposablePointcut 提供创建多个切点的操作类
+
+**切面 Advisor**    
+> Advice本身即可当作一个切面。但只有切点无法进行aop。Advisor描述切面，包括增强代码和切点信息。  
+
+- Advisor 仅包含Advice
+- PointcutAdvisor 包含了切点的切面，由Advice和Pointcut组成。
+- IntroductionAdvisor 引介切面，作用于类层面，由ClassFilter定义。  
+
+**PointcutAdvisor**  
+- DefaultPointcutAdvisor 最常用的切面类型
+- NameMatchMethodPointcutAdvisor 按方法名定义的切面
+- RegexpMethodPointcutAdvisor 按正则表达式定义切点的切面
+- StaticMethodMatcherPointcutAdvisor 静态方法定义切点的切面
+- AspectJExpressionPointcutAdvisor 用于AspectJ表达式定义切点的切面
+- AspectJPointcutAdvisor 用于AspectJ语法定义切点的切面  
+
+Spring通过ProxyBean来生成aop代理类。  
+```aidl
+<!-- 目标类 -->
+<bean id='target' class="Target" />
+<!-- 增强 也可直接作为interceptorNames使用 -->
+<bean id="myAdvice" class="Advice">
+<!-- 切面 proxyTargetClass 启用cglib代理-->
+<bean id='myAdvisor' class="Advisor" p:advice-ref="myAdvice">
+<bean id="proxyBeanId" class="org.springframework.aop.framework.ProxyFactoryBean"
+  p:interceptorNames="myAdvisor"
+  p:target-ref="target"
+  p:proxyTargetClass="true"
+/>
+```  
+内部是使用ProxyFactory来生成代理对象的。  
+
+```aidl
+Object target = new Object();
+BeforeAdvice advice = new CustomAdvice();
+// Spring的ProxyFactory
+ProxyFactory proxy = new ProxyFacotry();
+proxy.setTarget(target);
+
+//添加增强
+proxy.addAdvice(...);
+//添加切面
+proxy.addAdvisor(...);
+
+Object proxyObject = proxy.getProxy();
+//do something
+```  
+
+**自动实现代理类**  
+
+基于BeanPostProcessor容器级别处理器的自动代理实现类根据规则对匹配的Bean生成代理Bean实例。  
+- BeanNameAutoProxyCreator 为特定名称规则的Bean创建代理
+- DefaultAdvisorAutoProxyCreator 根据容器中所有Advisor，自动生成符合切面的Bean代理实例。
+- AnnotationAwareAspectJAutoProxyCreator 为包含AspectJ注解的Bean自动创建代理实例。
+
+**AspectJ**  
+增强注解  
+- @Before 前置增强
+- @AfterReturning 后置增强
+- @Around 环绕增强相当于MethodInterceptor
+- AfterThrowing 异常抛出增强
+- @After final增强，类似于try{}finally{}
+- @@DeclareParents 引介增强  
+
+切点织入顺序，在同一类中按定义顺序，不同类中按是否实现Ordered接口，没有实现则是不确定的。
