@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dao.UserBatisDao">
+    <select id="loadUser" resultType="User" parameterType="int">
+        SELECT USER_ID userId,
+       USER_NAME userName,
+       CREDITS,
+       PASSWORD,
+       LAST_VISIT lastVisit,
+       LAST_IP lastIp
+    FROM T_USER WHERE USER_ID = #{userId}
+    </select>
+    <select id="loadUser2" resultType="User" parameterType="dao.UserBatisQueryParam">
+        SELECT USER_ID userId,
+        USER_NAME userName,
+        CREDITS,
+        PASSWORD,
+        LAST_VISIT lastVisit,
+        LAST_IP lastIp
+        FROM T_USER WHERE USER_ID = #{userId}
+    </select>
+    <select id="loadUser3" resultType="User" parameterType="java.util.Map">
+        SELECT USER_ID userId,
+        USER_NAME userName,
+        CREDITS,
+        PASSWORD,
+        LAST_VISIT lastVisit,
+        LAST_IP lastIp
+        FROM T_USER WHERE USER_ID = #{userId}
+    </select>
+</mapper>

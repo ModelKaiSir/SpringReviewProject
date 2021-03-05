@@ -301,3 +301,37 @@ Spring中提供完善的事务管理机制。
 - rollbackForClassName 遇到时回滚的异常类型名称数组
 - noRollbackFor 遇到时不回滚的异常类型class数组
 - noRollbackForClassName 遇到时不回滚的异常类型名称数组
+
+**Hibernate**  
+see [hibernate](/hibernate.md)
+
+**Mybatis**  
+
+see [hibernate](/mybatis.md)
+
+**Spring Cache**  
+
+使用SpringCache，通过注解标注需要使用缓存的方法，并配置缓存对象。  
+```$xslt
+@Cacheable(cacheName="cacheName")
+public void method_(Object..params){
+    
+    //do something...    
+}
+```  
+Spring配置  
+```$xslt
+<!-- 开启注解缓存功能-->
+<cache:annotation-drivern />
+<bean id="cacheManager" class="org.springframework.cache.support.SimpleCacheManager">
+    <property name="caches">
+        <set>
+        <bean class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean" p:name="cacheName"/>
+        </set>
+    </property>
+</bean>
+```  
+缓存注解参数：cacheNames（缓存名）、key（缓存计算的key）、condition（过滤条件）
+- @Cacheable 优先查找缓存，其次执行方法并缓存。
+- @CachePut 先执行方法，然后更新缓存。
+- @CacheEvict 从缓存中清理数据。

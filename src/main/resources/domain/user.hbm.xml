@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping auto-import="true" default-lazy="false">
+    <class name="domain.User" table="T_USER">
+        <id name="userId" column="USER_ID">
+            <generator class="assigned"/>
+        </id>
+        <property name="userName" column="USER_NAME"/>
+        <property name="password" column="PASSWORD"/>
+        <property name="credits" column="CREDITS"/>
+        <property name="lastIp" column="LAST_IP"/>
+        <property name="lastVisit" column="LAST_VISIT"/>
+    </class>
+</hibernate-mapping>

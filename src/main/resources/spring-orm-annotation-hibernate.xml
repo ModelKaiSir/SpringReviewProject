@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:util="http://www.springframework.org/schema/util" xmlns:task="http://www.springframework.org/schema/cache"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-4.0.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop-4.0.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd">
+
+    <import resource="classpath:ureport-console-context.xml"></import>
+    <!--<context:property-placeholder location="classpath:properties/a.properties"></context:property-placeholder>-->
+
+    <bean id="propertyConfigurer" parent="ureport.props">
+        <property name="locations">
+            <list>
+                <value>classpath:properties/a.properties</value>
+                <value>classpath:properties/b.properties</value>
+            </list>
+        </property>
+        <property name="fileEncoding" value="utf-8"></property>
+        <property name="ignoreUnresolvablePlaceholders" value="true"></property>
+        <property name="order" value="1"></property>
+    </bean>
+
+    <!--<context:component-scan base-package="task"/>-->
+    <bean id="userHibernateDao" class="dao.UserHibernateDao"></bean>
+
+    <bean id="dataSourceTarget" class="org.apache.commons.dbcp.BasicDataSource"
+          destroy-method="close"
+          p:driverClassName="com.mysql.jdbc.Driver"
+          p:url="jdbc:mysql://localhost:3306/sampledb"
+          p:username="root"
+          p:password="root">
+    </bean>
+
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy"
+          p:targetDataSource-ref="dataSourceTarget"></bean>
+
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean"
+          p:dataSource-ref="dataSource">
+        <property name="packagesToScan">
+            <value>domain</value>
+        </property>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+                <prop key="show_sql">true</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="hibernateTemplate" class="org.springframework.orm.hibernate4.HibernateTemplate"
+          p:sessionFactory-ref="sessionFactory"></bean>
+
+    <bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager"
+          p:sessionFactory-ref="sessionFactory"></bean>
+
+    <tx:annotation-driven/>
+</beans>
